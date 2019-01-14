@@ -18,7 +18,7 @@
 (define-tokens the-tokens (id))
 (define-empty-tokens the-empty-tokens (comma not EOF pol end po do nop
                                              lparen rparen if is dot semicolon true
-                                             info compare test s a r))
+                                             info compare query where s a r))
 
 (define-lex-abbrevs
   (identifier-characters (re-or (char-range "A" "z")
@@ -31,7 +31,8 @@
   (lexer-src-pos
    ("info" (token-info))
    ("compare" (token-compare))
-   ("test" (token-test))
+   ("query" (token-query))
+   ("where" (token-where))
 
    ("s" (token-s))
    ("a" (token-a))
@@ -200,10 +201,10 @@
       (begin
         (set! token-history empty)
         (command 'compare (list $2 $3))))
-     ((test id NONEMPTYCONDITIONLIST)
+     ((query id where NONEMPTYCONDITIONLIST)
       (begin
         (set! token-history empty)
-        (command 'test (cons $2 $3))))
+        (command 'query (cons $2 $4))))
      ((POL)
       (begin
         (set! token-history empty)
@@ -230,12 +231,12 @@
 
     ; Conditions will be either unary or binary
     ; "x is foo" or "x is foo-of y"
-    (CONDITION ((not VAR is id)
-               (condition #f $4 (list $2)))
+    (CONDITION ((VAR is not id)
+               (condition #f $4 (list $1)))
                ((VAR is id)                
                 (condition #t $3 (list $1)))
-               ((not VAR is id VAR)
-                (condition #f $4 (list $2 $5)))
+               ((VAR is not id VAR)
+                (condition #f $4 (list $1 $5)))
                ((VAR is id VAR)
                 (condition #t $3 (list $1 $4))))
     

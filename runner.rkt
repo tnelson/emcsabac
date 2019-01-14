@@ -219,7 +219,7 @@
 (define (make-universe atoms)
   (universe (map (lambda (a) (string->symbol (string-append (symbol->string a) "$0"))) atoms)))
 
-(define (run-tests env args)
+(define (run-query env args)
   (define polname (first args))
   (define conditions (rest args))
   (define conditions-fmla (map build-condition conditions))
@@ -245,7 +245,7 @@
          (define rosette-fmla (interpret* fmla instantiatedBounds))
          (define rosette-result (solve (assert rosette-fmla)))
          (define rules (policy-rules pol))
-         (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-results rosette-result #:ruleset rules) 
+         (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result #:ruleset rules) 
          ]))
 
 (define (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result #:ruleset ruleset #:msg [msg #f])
@@ -357,8 +357,8 @@
                   [(and (command? cmd) (equal? (command-name cmd) 'compare))                   
                    (run-compare env (command-args cmd))
                    (run-commands-helper (rest cmdlst) env)]
-                  [(and (command? cmd) (equal? (command-name cmd) 'test))                   
-                   (run-tests env (command-args cmd))
+                  [(and (command? cmd) (equal? (command-name cmd) 'query))                   
+                   (run-query env (command-args cmd))
                    (run-commands-helper (rest cmdlst) env)]
                   [else
                    (raise (format "Undefined command made it through parser: ~a" cmd))]))))  
