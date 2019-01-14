@@ -263,7 +263,7 @@
                   (define ros-condition (interpret* (eval condition-fmla ns) instantiatedBounds))
                   (define tf (evaluate ros-condition rosette-result))
                   (cond [(and tf acc)
-                         (printf "This rule applied: ~a~n" r)
+                         (printf "This rule applied: ~a~n" (pretty-format-rule r))
                          #f]
                         [else acc]))
                    #t ruleset)
@@ -273,6 +273,19 @@
            (printf "~a~n" msg))
          ]
         [else (printf "No scenario existed matching those conditions.~n")]))
+
+(define (pretty-format-condition c)
+  (define signis (cond [(condition-sign c) "is"]
+                       [else "not is"]))
+  (define firstvar (first (condition-args c)))
+  (cond [(> (length (condition-args c)) 1)
+         (format "~a ~a ~a ~a" firstvar signis (condition-pred c) (second (condition-args c)))]
+        [else
+         (format "~a ~a ~a" firstvar signis (condition-pred c))]))
+
+(define (pretty-format-rule r)
+  (define conds (map pretty-format-condition (rule-conditions r)))
+  (format "~a if: ~a." (rule-decision r) (string-join conds ", ")))
 
 
 (define (run-compare env args)

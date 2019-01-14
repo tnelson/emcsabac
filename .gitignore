@@ -3,3 +3,4 @@ compiled/*
 lang/compiled/*
 tests/compiled/*
 *.bak
+*.rkt~
