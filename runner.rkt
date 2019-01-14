@@ -56,7 +56,9 @@
    (in Read Action)
    (in Accountant Subject)
    (in Customer Subject)
+   (in Admin Subject)
    (in File Resource)
+  
    (no (& Subject Action))
    (no (& Action Resource))
    (no (& Subject Resource))
