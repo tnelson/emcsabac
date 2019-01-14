@@ -56,5 +56,6 @@ end;
 
 // compare x; // error
 compare original modified;
-compare original modified2;
 query original where s is not admin;
+compare original modified2 where s is not accountant;
+

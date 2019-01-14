@@ -201,6 +201,10 @@
       (begin
         (set! token-history empty)
         (command 'compare (list $2 $3))))
+     ((compare id id where NONEMPTYCONDITIONLIST)
+      (begin
+        (set! token-history empty)
+        (command 'compare (list $2 $3 $5))))
      ((query id where NONEMPTYCONDITIONLIST)
       (begin
         (set! token-history empty)

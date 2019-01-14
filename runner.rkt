@@ -71,7 +71,7 @@
    (one reqR)
      
    (in Audit File)
-   (in Training Subject)
+   (in Training (+ Accountant Admin)) ; only employees can be in training
    (in Owner (-> Customer File))
    ))
 
@@ -245,10 +245,11 @@
          (define rosette-fmla (interpret* fmla instantiatedBounds))
          (define rosette-result (solve (assert rosette-fmla)))
          (define rules (policy-rules pol))
-         (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result #:ruleset rules) 
+         (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result #:ruleset1 rules) 
          ]))
 
-(define (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result #:ruleset ruleset #:msg [msg #f])
+(define (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result
+                                      #:ruleset1 ruleset1 #:ruleset2 [ruleset2 empty] #:msg [msg #f])
   (cond [(sat? rosette-result)
          (define result (interpretation->relations (evaluate instantiatedBounds rosette-result)))
          ;(printf "~n~n(debug) result ~a~n" (pretty-format result))
@@ -258,17 +259,24 @@
          (printf "~n~n~a~n" strout)
 
          ; * Rule blaming *
-         (foldl (lambda (r acc)
-                  ; Ocelot doesn't have an "evaluator" per se. So use *Rosette's*
-                  ; evaluator on the *Rosette* version of the condition, compiled via the same instantiated bounds.
-                  (define condition-fmla (build-rule-matches r))
-                  (define ros-condition (interpret* (eval condition-fmla ns) instantiatedBounds))
-                  (define tf (evaluate ros-condition rosette-result))
-                  (cond [(and tf acc)
-                         (printf "This rule applied: ~a~n" (pretty-format-rule r))
-                         #f]
-                        [else acc]))
-                   #t ruleset)
+         (define (rule-blaming qualifier ruleset) 
+           (foldl (lambda (r acc)
+                    ; Ocelot doesn't have an "evaluator" per se. So use *Rosette's*
+                    ; evaluator on the *Rosette* version of the condition, compiled via the same instantiated bounds.
+                    (define condition-fmla (build-rule-matches r))
+                    (define ros-condition (interpret* (eval condition-fmla ns) instantiatedBounds))
+                    (define tf (evaluate ros-condition rosette-result))
+                    (cond [(and tf acc)
+                           (printf "This rule applied~a: ~a~n" qualifier (pretty-format-rule r))
+                           #f]
+                          [else acc]))
+                  #t ruleset))
+
+         (if (empty? ruleset2)
+             (rule-blaming "" ruleset1)
+             (begin
+               (rule-blaming " in the first policy" ruleset1)
+               (rule-blaming " in the second policy" ruleset2)))
          
          ; * Message *
          (when msg
@@ -291,7 +299,11 @@
 
 
 (define (run-compare env args)
-  (printf "Comparing policies ~a and ~a...~n" (first args) (second args))
+  (define where (cond [(empty? (rest (rest args)))
+                       empty]
+                      [else
+                       (first (rest (rest args)))]))
+  (printf "Comparing policies ~a and ~a where ~a...~n" (first args) (second args) (map pretty-format-condition where))
   (cond [(and (find-pol env (first args))
               (find-pol env (second args)))
          (let ([pol1 (find-pol env (first args))]
@@ -313,13 +325,15 @@
            (define queryNP1P2 `(and ,permit2 (! ,permit1))) ; second           
 
            ; "Eval" as consequence of building atop prior code
-           (define fmla1 (eval `(and ,structural-axioms
+           (define fmla1 (eval `(and ,@where
+                                     ,structural-axioms
                                      ,queryP1NP2) ns))
-           (define fmla2 (eval `(and ,structural-axioms
+           (define fmla2 (eval `(and ,@where
+                                     ,structural-axioms
                                      ,queryNP1P2) ns))
 
-           (define rules (append (policy-rules pol1) (policy-rules pol2)))
-           
+           (printf "~a~n" fmla1)
+  
            ; Try each direction separately so that we can print out which policy decides what.
            ; Try P1.permit is not subset of P2.permit                      
            (define rosette-fmla (interpret* fmla1 instantiatedBounds))         
@@ -327,7 +341,8 @@
            (cond [(sat? rosette-result)               
                   (pretty-printf-rosette-result #:inst-bounds instantiatedBounds
                                                 #:rosette-result rosette-result
-                                                #:ruleset rules
+                                                #:ruleset1 (policy-rules pol1)
+                                                #:ruleset2 (policy-rules pol2)
                                                 #:msg (format "~a permitted; ~a denied" (first args) (second args)))]
                  [else
                   ; Try P2.permit is not subset of P1.permit
@@ -335,7 +350,8 @@
                   (define rosette-result2 (solve (assert rosette-fmla2)))
                   (pretty-printf-rosette-result #:inst-bounds instantiatedBounds
                                                 #:rosette-result rosette-result2
-                                                #:ruleset rules
+                                                #:ruleset1 (policy-rules pol1)
+                                                #:ruleset2 (policy-rules pol2)
                                                 #:msg (format "~a permitted; ~a denied" (second args) (first args)))])
            )]
         [(not (find-pol env (first args)))
