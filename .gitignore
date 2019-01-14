@@ -1,4 +1,5 @@
 emcsabac-debug.txt
 compiled/*
 lang/compiled/*
+tests/compiled/*
 *.bak
