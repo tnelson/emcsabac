@@ -324,15 +324,15 @@
            (define queryP1NP2 `(and ,permit1 (! ,permit2))) ; first
            (define queryNP1P2 `(and ,permit2 (! ,permit1))) ; second           
 
+           (define where-fmlas (map build-condition where))
+           
            ; "Eval" as consequence of building atop prior code
-           (define fmla1 (eval `(and ,@where
+           (define fmla1 (eval `(and ,@where-fmlas
                                      ,structural-axioms
                                      ,queryP1NP2) ns))
-           (define fmla2 (eval `(and ,@where
+           (define fmla2 (eval `(and ,@where-fmlas
                                      ,structural-axioms
                                      ,queryNP1P2) ns))
-
-           (printf "~a~n" fmla1)
   
            ; Try each direction separately so that we can print out which policy decides what.
            ; Try P1.permit is not subset of P2.permit                      
