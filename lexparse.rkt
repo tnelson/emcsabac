@@ -199,7 +199,7 @@
                         (position-offset start-pos)      
                         (- (position-offset end-pos) (position-offset start-pos)))))
    
-   ;(debug "emcsarbac-debug.txt")
+   ;(debug "emcsabac-debug.txt")
    (tokens the-tokens the-empty-tokens)
    ;(precs (left + -))
    (grammar    

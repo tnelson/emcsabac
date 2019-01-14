@@ -1,7 +1,7 @@
 #lang racket
 
-(require emcsarbac/runner
-         emcsarbac/lexparse
+(require emcsabac/runner
+         emcsabac/lexparse
          rackunit
          rackunit/text-ui)
 
@@ -12,7 +12,7 @@
 
 (define parser-error-tests
   (test-suite
-   "Tests for arbac parser errors"
+   "Tests for ABAC parser errors"
    
    ;; TODO: unrecognized relation name error?
    ;; TODO: permit/deny only decisions allowed

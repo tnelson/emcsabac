@@ -1,6 +1,6 @@
 #lang info
 
-(define name "emcsarbac")
+(define name "emcsabac")
 ;(define scribblings '([]))
-(define collection "emcsarbac")
+(define collection "emcsabac")
 ;(define compile-omit-paths '("extra-files" "extended-examples"))

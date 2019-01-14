@@ -1,4 +1,4 @@
-#lang emcsarbac
+#lang emcsabac
 
 // Fiction: the policy language doesn't support "not" in rules, similar to many basic firewalls.
 // This means "deny" rules are far more important! Without them, expressive power of the language goes down.

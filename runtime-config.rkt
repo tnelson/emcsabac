@@ -1,6 +1,6 @@
 #lang racket
 
-(require emcsarbac/lang/reader)
+(require emcsabac/lang/reader)
 
 (provide configure)
 
@@ -11,7 +11,7 @@
 
 ; Replace default REPL handling
 (define (repl-read-interaction src in)
-  (read-syntax-arbac-single src in))
+  (read-syntax-abac-single src in))
 
 ;(define orig-print (current-print))
 ;(define (repl-print proc)    

@@ -9,7 +9,7 @@
       ; Replaces default reader in REPL so that REPL can take commands instead of Racket expressions
       [(configure-runtime)    
        ; Note: LIST of vectors... allows for multiple config functions to be run
-      '(#(emcsarbac/runtime-config configure #f))]
+      '(#(emcsabac/runtime-config configure #f))]
       [(drracket:submit-predicate)       
        repl-submit-predicate]          
       [else default])))

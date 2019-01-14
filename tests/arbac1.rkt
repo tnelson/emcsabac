@@ -1,4 +1,4 @@
-#lang emcsarbac
+#lang emcsabac
 
 policy original
   permit if: admin s, read a, file r.    
