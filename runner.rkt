@@ -422,43 +422,6 @@
                     (define extras-unary-str (string-join (map (lambda (a) (format "~a: ~a" a (unaries-in relhash a))) extras) "\n  "))
                     (format "Also, for some ~a,~n  ~a~n  ~a~n" extras extras-unary-str binary-ground-str))))))
 
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Preliminary test for comparison, etc.
-; Note: don't remove the deny <- true. permit <- true. That tests handling of empty conjunction.
-(define testlist (parse-all-commands 'test (open-input-string
-"policy original
-  permit if: admin s, read a.
-  permit if: admin s, write a.
-  deny   if: write a, file r, under-audit r.
-  permit if: employee s, read a, owner s r.
-  permit if: employee s, write a, owner s r.  
-  deny if: true.
-end;
-policy mod1
-  permit if: admin s, read a.
-  permit if: admin s, write a.
-  deny if: write a, file r, under-audit r.
-  permit if: employee s, read a, owner s r.
-  permit if: employee s, write a, owner s r.  
-  permit if: accountant s, read a, under-audit r.
-  permit if: accountant s, annotate a, under-audit r.
-  deny if: true.
-  permit if: true.
-end;
-info;
-compare original mod1;
-")))
-
-(define lp-tests
-  (test-suite
-   "Tests for runner.rkt"
-   
-   (check-false (empty? (run-commands testlist)))))
-
-
 (printf "ABAC Policy Analyzer...loaded!~n")
 
 

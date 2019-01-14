@@ -3,7 +3,7 @@
 // Fiction: the policy language doesn't support "not" in rules, similar to many basic firewalls.
 // This means "deny" rules are far more important! Without them, expressive power of the language goes down.
 
-policy filesystem
+policy original
   // Administrators can read and write anything
   permit if: s is admin, a is read.
   permit if: s is admin, a is write.
@@ -19,7 +19,7 @@ end;
 // new auditing department.
 // (application and removal of the auditing flag is outside the scope of this policy)
 
-policy fsplusacc
+policy modified
   // Administrators can read and write anything
   permit if: s is admin, a is read.
   permit if: s is admin, a is write.
@@ -35,11 +35,11 @@ policy fsplusacc
   permit if: s is accountant, a is write, r is under-audit.    
 end;
 
-policy fsplusaccshuffle
+// policy fsplusaccshuffle
  // TODO: fill  
-end;
+// end;
 
 
-//compare x; // error
-//compare fs fsplusacc;
-//compare fs fsplusaccshuffle;
+// compare x; // error
+compare original modified;
+// compare fs fsplusaccshuffle;

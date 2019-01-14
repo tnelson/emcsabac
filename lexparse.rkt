@@ -17,8 +17,8 @@
 
 (define-tokens the-tokens (id))
 (define-empty-tokens the-empty-tokens (comma not EOF pol end po do nop
-                                             lparen rparen if dot semicolon true
-                                             info compare test))
+                                             lparen rparen if is dot semicolon true
+                                             info compare test s a r))
 
 (define-lex-abbrevs
   (identifier-characters (re-or (char-range "A" "z")
@@ -32,9 +32,14 @@
    ("info" (token-info))
    ("compare" (token-compare))
    ("test" (token-test))
+
+   ("s" (token-s))
+   ("a" (token-a))
+   ("r" (token-r))
    
    ("." (token-dot))
    ("if:" (token-if))
+   ("is" (token-is))
    ("true" (token-true))
    ("(" (token-lparen))
    (")" (token-rparen))
@@ -167,27 +172,7 @@
               
               [(started-with `(pol ,(token-id 'x)))
                "A policy must be given a name. Please name the policy."]                        
-                            
-              [(started-with '(LOAD POLICY))
-               "To load a .p policy file, use LOAD POLICY <desired name> = <file name>;"]
-              
-              [(started-with '(LOAD XACML))
-               "To load an XACML policy file, use LOAD XACML <desired name> = <file name>;"]
-              
-              [(started-with '(LOAD SQS))
-               "To load an Amazon SQS policy file, use LOAD SQS <desired name> = <file name>;"]
-              
-              [(started-with '(LOAD))
-               "Load what? (LOAD POLICY to load a .p file, LOAD IOS to load a Cisco IOS configuration, etc.)" ]
-              
-              ;[(improper-query-name?)                         
-              ; (format "LET: The query name must begin with a lowercase letter, and must not be a reserved word.~n")]              
-              ;[(improper-var-decls?)
-              ; (format "LET: Square brackets must contain a comma-separated list of declarations.~nEach declaration should have the form <varname>:<Type>~n")]
-              
-              [(started-with '(LET))                         
-               (format "Usage: LET <name>[<variable-declarations>] BE <condition>.~n")]
-                            
+                                           
               ; Last resort              
               [else (general-error-message tok-ok? token-name token-value start-pos end-pos)]))
                        
@@ -242,16 +227,22 @@
           (rule $1 $3)))
     (NONEMPTYCONDITIONLIST ((CONDITION comma NONEMPTYCONDITIONLIST) (cons $1 $3))
                            ((CONDITION) (list $1)))
-    (CONDITION ((not id NONEMPTYVARLIST)
-               (condition #f $2 $3))
-               ((id NONEMPTYVARLIST)                
-                (condition #t $1 $2)))
-    ; For now, no nullary conditions
-    (NONEMPTYVARLIST ((VAR NONEMPTYVARLIST) (cons $1 $2))
-                     ((VAR) (list $1)))
-    ; Not just s/a/r, may need existentials
-    (VAR ((id)
-          $1)) )))
+
+    ; Conditions will be either unary or binary
+    ; "x is foo" or "x is foo-of y"
+    (CONDITION ((not VAR is id)
+               (condition #f $4 (list $2)))
+               ((VAR is id)                
+                (condition #t $3 (list $1)))
+               ((not VAR is id VAR)
+                (condition #f $4 (list $2 $5)))
+               ((VAR is id VAR)
+                (condition #t $3 (list $1 $4))))
+    
+    ; For now, a variable has to be either s, a, or r. No existentials!
+    (VAR ((s) 's)
+         ((a) 'a)
+         ((r) 'r) ))))
   
   ; wrap the parser func. wrapper has same type
   (lambda (gen)             
