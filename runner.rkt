@@ -29,31 +29,24 @@
 
 (define Admin (declare-relation 1 "Admin"))
 (define Accountant (declare-relation 1 "Accountant"))
-(define Employee (declare-relation 1 "Employee"))
 (define Customer (declare-relation 1 "Customer"))
 
 (define Read (declare-relation 1 "Read"))
 (define Write (declare-relation 1 "Write"))
-(define Annotate (declare-relation 1 "Annotate")) ; non-obvious fact: an Annotate is a Write (see below)
 
 (define File (declare-relation 1 "File"))
 (define Audit (declare-relation 1 "Under-Audit")) ; under audit
+(define Training (declare-relation 1 "In-Training")) ; employee in training
 
-(define Owner (declare-relation 2 "Owner"))
-;(define Serving (declare-relation 2 "Serving"))
-;(define Record-For (declare-relation 2 "Record-For"))
-;(define Assigned-To (declare-relation 2 "Assigned-To"))
+(define Owner (declare-relation 2 "Owner-Of"))
 (define reqS (declare-relation 1 "reqS"))
 (define reqA (declare-relation 1 "reqA"))
 (define reqR (declare-relation 1 "reqR"))
 
-(define relations (hash "Admin" Admin     "Accountant" Accountant "Employee" Employee
-                        "Read" Read       "Write" Write           "Annotate" Annotate
-                        "File" File       "Under-Audit" Audit           "Owner" Owner
-                        ;"Serving" Serving
-                        ;"Record-For" Record-For
-                        ;"Assigned-To" Assigned-To
-                        "Customer" Customer
+(define relations (hash "Admin" Admin     "Accountant" Accountant "Customer" Customer
+                        "Read" Read       "Write" Write           
+                        "File" File       "Under-Audit" Audit     "Owner-Of" Owner                        
+                        "In-Training" Training
                         "Subject" Subject "Action" Action "Resource" Resource
                         "reqS" reqS "reqA" reqA "reqR" reqR))
 
@@ -61,28 +54,23 @@
   (and
    (in Write Action)    ; base sigs
    (in Read Action)
-   (in Employee Subject)
+   (in Accountant Subject)
    (in Customer Subject)
    (in File Resource)
    (no (& Subject Action))
    (no (& Action Resource))
    (no (& Subject Resource))
-   (no (& Customer Employee))
+   (no (& Customer Admin))
+   (no (& Customer Accountant))
    (no (& Read Write))
 
    (one reqS) ; Skolem constants
    (one reqA)
    (one reqR)
-   
-   (in Annotate Write) ; an annotation is a kind of write
-   (in Admin Employee)
-   (in Accountant Employee)   
-   
-   (in Audit File) ; files are under audit or not
-   (in Owner (-> Employee File)) ; employees own files
-   ;(in Serving (-> Employee Customer))
-   ;(in Record-For (-> File Customer))
-   ;(in Assigned-To (-> Accountant File))
+     
+   (in Audit File)
+   (in Training Subject)
+   (in Owner (-> Customer File))
    ))
 
 ; Build a bound struct for relation <r> that has an empty lower bound and maximal upper bound.
