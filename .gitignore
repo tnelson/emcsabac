@@ -1,0 +1,4 @@
+emcsabac-debug.txt
+compiled/*
+lang/compiled/*
+*.bak
