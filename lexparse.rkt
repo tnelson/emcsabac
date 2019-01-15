@@ -148,8 +148,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Detect invalid relation-names at the parser level
+(define allowed-relations-lc
+  '("admin" "accountant" "customer"
+            "read" "write" "file" "under-audit"
+            "owner-of" "in-training"))
+
 (define (command-parser source-name)
 
+  (define (validate-relation relname start-pos end-pos)
+    (cond [(member (symbol->string relname) allowed-relations-lc)
+           relname]
+          [else           
+           (set! token-history empty)
+           (raise-read-error (format "Unrecognized name: ~a. In this position, valid names include: ~a." relname allowed-relations-lc)
+                             source-name
+                             (position-line start-pos)
+                             (position-col start-pos)
+                             (position-offset start-pos)      
+                             (- (position-offset end-pos) (position-offset start-pos)))]))
+        
   (define internal-command-parse
     (parser
    (src-pos)
@@ -236,13 +254,13 @@
     ; Conditions will be either unary or binary
     ; "x is foo" or "x is foo-of y"
     (CONDITION ((VAR is not id)
-               (condition #f $4 (list $1)))
+               (condition #f (validate-relation $4 $4-start-pos $4-end-pos) (list $1)))
                ((VAR is id)                
-                (condition #t $3 (list $1)))
+                (condition #t (validate-relation $3 $3-start-pos $3-end-pos) (list $1)))
                ((VAR is not id VAR)
-                (condition #f $4 (list $1 $5)))
+                (condition #f (validate-relation $4 $4-start-pos $4-end-pos) (list $1 $5)))
                ((VAR is id VAR)
-                (condition #t $3 (list $1 $4))))
+                (condition #t (validate-relation $3 $3-start-pos $3-end-pos) (list $1 $4))))
     
     ; For now, a variable has to be either s, a, or r. No existentials!
     (VAR ((s) 's)

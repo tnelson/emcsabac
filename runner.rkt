@@ -106,16 +106,9 @@
   (bounds U (map (lambda (r) (bound-rel atoms r))
                  (hash-values relations))))
                  
-
-; Must support (not necessarily efficiently):
-;  - policy COMPARISON
-;  - rule blaming
-;  - testing a single request
-;  - policy comparison WHERE <conjunction>
 ; NO support for:
 ;  - equality
 ;  - arbitrary queries (just conjunctive ones allowed)
-;
 
 (struct atom (pred args) #:transparent)
 
@@ -141,10 +134,8 @@
 (define (run-info env)
   (printf "You have loaded ~a policies so far.~n" (length env))  
   (for-each (lambda (p)
-              (printf "  Policy: ~a~n" (policy-name p)))
-              ;(printf "  Atoms used: ~a~n" (extract-atoms-policy p)))
+              (printf "  Policy: ~a~n" (policy-name p)))              
             env))
-
 
 ; Convert a list of identifiers to a product
 (define (list->product l)
@@ -267,7 +258,7 @@
                     (define ros-condition (interpret* (eval condition-fmla ns) instantiatedBounds))
                     (define tf (evaluate ros-condition rosette-result))
                     (cond [(and tf acc)
-                           (printf "This rule applied~a: ~a~n" qualifier (pretty-format-rule r))
+                           (printf "This rule applied~a:~n    ~a~n" qualifier (pretty-format-rule r))
                            #f]
                           [else acc]))
                   #t ruleset))
@@ -303,7 +294,10 @@
                        empty]
                       [else
                        (first (rest (rest args)))]))
-  (printf "Comparing policies ~a and ~a where ~a...~n" (first args) (second args) (map pretty-format-condition where))
+  (if (empty? where)      
+      (printf "Comparing policies ~a and ~a...~n" (first args) (second args))
+      (printf "Comparing policies ~a and ~a where ~a...~n" (first args) (second args) (map pretty-format-condition where)))
+  
   (cond [(and (find-pol env (first args))
               (find-pol env (second args)))
          (let ([pol1 (find-pol env (first args))]
@@ -343,7 +337,7 @@
                                                 #:rosette-result rosette-result
                                                 #:ruleset1 (policy-rules pol1)
                                                 #:ruleset2 (policy-rules pol2)
-                                                #:msg (format "~a permitted; ~a denied" (first args) (second args)))]
+                                                #:msg (format "Decisions: ~a permitted; ~a denied" (first args) (second args)))]
                  [else
                   ; Try P2.permit is not subset of P1.permit
                   (define rosette-fmla2 (interpret* fmla2 instantiatedBounds))                  
@@ -352,7 +346,7 @@
                                                 #:rosette-result rosette-result2
                                                 #:ruleset1 (policy-rules pol1)
                                                 #:ruleset2 (policy-rules pol2)
-                                                #:msg (format "~a permitted; ~a denied" (second args) (first args)))])
+                                                #:msg (format "Decisions: ~a permitted; ~a denied" (second args) (first args)))])
            )]
         [(not (find-pol env (first args)))
          (printf "Unknown policy name: ~a~n" (first args))]
@@ -397,12 +391,17 @@
               pertinent-unaries))
 
 ; Format a tuple prettily (concretely, turn atom names into variables where appropriate)
-(define (pretty-format-tuple t)
-  (map (lambda (a)
+(define (pretty-format-tuple relname t)
+  (define displayargs
+    (map (lambda (a)
          (cond [(equal? a 's$0) '<s>]
                [(equal? a 'a$0) '<a>]
                [(equal? a 'r$0) '<r>]
                [else a])) t))
+  (when (> (length displayargs) 2)
+    (raise (format "pretty-format-tuple can't handle arity >2. Given ~a" displayargs)))
+  (define optspace (if (> (length displayargs) 1) " " ""))
+  (format "~a is ~a~a~a" (first displayargs) relname optspace (second displayargs)))
 
 ; Return a list of formatted statements about membership in binary relations.
 ; Say nothing about empty binary relations.
@@ -416,7 +415,7 @@
                   (if (empty? (hash-ref relhash br))
                       #f 
                       (map (lambda (tup)
-                             (format "~a~a" (relation-name br) (pretty-format-tuple tup)))
+                             (pretty-format-tuple (relation-name br) tup))
                            (hash-ref relhash br))))
                 binaries))
   (values
