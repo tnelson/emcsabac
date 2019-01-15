@@ -133,7 +133,7 @@
 
 (define (started-with token-list)  
   (define rev-tokens (get-reversed-tokens-so-far-no-eof))
-  (printf "started-with: history:~a case:~a ~n" rev-tokens token-list)
+  ;(printf "started-with: history:~a case:~a ~n" rev-tokens token-list)
   (cond [(>= (length rev-tokens) (length token-list))
          (define other-tokens (take rev-tokens (length token-list)))
          
@@ -176,7 +176,7 @@
    (error 
     (lambda (tok-ok? token-name token-value start-pos end-pos) 
       ; Token-history is reversed here.
-      (printf "(DEBUG) History: ~a~n" (map position-token-token token-history))
+      ;(printf "(DEBUG) History: ~a~n" (map position-token-token token-history))
       
       ; Can we guess at the kind of command they were trying to use?
       ; customize an error message depending on history:
@@ -187,7 +187,9 @@
               ; "Please enter a valid command."]
               
               [(started-with '(compare))
-               "To compare the behavior of two policies, use 'COMPARE <policy name> <policy name>' (without the quotes or angle-brackets)."]
+               "To compare the behavior of two policies, use 'COMPARE <policy name> <policy name> WHERE <conditions>' (without the quotes or angle-brackets). The 'WHERE' part may be omitted if there are no conditions."]
+              [(started-with '(query))
+               "To query the behavior of a policy, use 'QUERY <policy name> WHERE <conditions>' (without the quotes or angle-brackets)."]
               
               [(started-with `(pol ,(token-id 'x)))
                "A policy must be given a name. Please name the policy."]                        

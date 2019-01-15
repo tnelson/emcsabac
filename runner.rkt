@@ -98,7 +98,7 @@
     [(equal? 2 (relation-arity r))     
      (make-bound r '() (cartesian-product atoms atoms))]
     [else
-     (raise (format "Error: relation ~a had invalid arity" r))]))
+     (raise-user-error (format "Error: relation ~a had invalid arity" r))]))
 
 ; Bound overall bounds struct containing bound for every relation
 (define (make-bounds U)
@@ -202,7 +202,7 @@
   (define filtered-env (filter (lambda (p) (equal? (policy-name p) pname)) env))
   (if (not (empty? filtered-env))
       (first filtered-env)
-      (raise (format "No policy named ~a found.~n" pname))))
+      #f))
 
 (define-namespace-anchor anchor)
 (define ns (namespace-anchor->namespace anchor))
@@ -216,7 +216,7 @@
   (define conditions-fmla (map build-condition conditions))
   (define pol (find-pol env polname))
   (cond [(equal? pol #f) ; don't try to use not
-         (raise (format "Unknown policy: ~a~n" polname))]
+         (raise-user-error (error (format "Unknown policy: ~a" polname)))]
         [else
          (define varset (remove-duplicates
                          (flatten (map (lambda (a) (atom-args a))
@@ -236,8 +236,7 @@
          (define rosette-fmla (interpret* fmla instantiatedBounds))
          (define rosette-result (solve (assert rosette-fmla)))
          (define rules (policy-rules pol))
-         (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result #:ruleset1 rules) 
-         ]))
+         (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result #:ruleset1 rules) ]))
 
 (define (pretty-printf-rosette-result #:inst-bounds instantiatedBounds #:rosette-result rosette-result
                                       #:ruleset1 ruleset1 #:ruleset2 [ruleset2 empty] #:msg [msg #f])
@@ -349,9 +348,9 @@
                                                 #:msg (format "Decisions: ~a permitted; ~a denied" (second args) (first args)))])
            )]
         [(not (find-pol env (first args)))
-         (printf "Unknown policy name: ~a~n" (first args))]
+         (raise-user-error (format "Unknown policy name: ~a" (first args)))]
         [(not (find-pol env (second args)))
-         (printf "Unknown policy name: ~a~n" (second args))]))
+         (raise-user-error (format "Unknown policy name: ~a" (second args)))]))
 
 (define (run-commands env cmdlst)
   (define (run-commands-helper cmdlst env)
@@ -371,7 +370,7 @@
                    (run-query env (command-args cmd))
                    (run-commands-helper (rest cmdlst) env)]
                   [else
-                   (raise (format "Undefined command made it through parser: ~a" cmd))]))))  
+                   (raise-user-error (format "Undefined command made it through parser: ~a" cmd))]))))  
   (if (empty? cmdlst)
       ""
       (run-commands-helper cmdlst env)))
@@ -399,7 +398,7 @@
                [(equal? a 'r$0) '<r>]
                [else a])) t))
   (when (> (length displayargs) 2)
-    (raise (format "pretty-format-tuple can't handle arity >2. Given ~a" displayargs)))
+    (raise-user-error (format "pretty-format-tuple can't handle arity >2. Given ~a" displayargs)))
   (define optspace (if (> (length displayargs) 1) " " ""))
   (format "~a is ~a~a~a" (first displayargs) relname optspace (second displayargs)))
 

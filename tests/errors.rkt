@@ -23,8 +23,12 @@
    (check-exn #rx"Couldn't understand" (lambda () (parse-test "policy permit : true. end")))
 
    (check-exn #rx"Unrecognized name:" (lambda () (parse-test "policy test permit if: s is badname. end")))
+
+   (check-exn #rx"Unknown policy" (lambda () (parse-test "compare abc def")))
+   (check-exn #rx"Unknown policy" (lambda () (parse-test "query abc where s is admin")))
    ))
 
 ;(run-tests parser-error-tests)
+
 
 
