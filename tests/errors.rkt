@@ -20,7 +20,7 @@
    
    (check-exn #rx"A policy must be given a name." (lambda () (parse-test "policy permit if: true. end")))
 
-   (check-exn #rx"Couldn't understand" (lambda () (parse-test "policy permit : true. end")))
+   (check-exn #rx"Couldn't understand" (lambda () (parse-test "policy permit if: true. end")))
 
    (check-exn #rx"Unrecognized name:" (lambda () (parse-test "policy test permit if: s is badname. end")))
 
