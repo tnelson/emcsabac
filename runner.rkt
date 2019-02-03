@@ -212,7 +212,8 @@
 
 (define (run-query env args)
   (define polname (first args))
-  (define conditions (rest args))
+  (define decname (second args))
+  (define conditions (rest (rest args)))
   (define conditions-fmla (map build-condition conditions))
   (define pol (find-pol env polname))
   (cond [(equal? pol #f) ; don't try to use not
@@ -221,14 +222,14 @@
          (define varset (remove-duplicates
                          (flatten (map (lambda (a) (atom-args a))
                                        (extract-atoms-policy pol)))))
-         (define permit (build-dec 'permit pol))
+         (define decision (build-dec decname pol))
          (define U (make-universe varset))
          ;(printf "universe: ~a~n" (universe-atoms U))
          (define allBounds (make-bounds U))
          ;(printf "bounds: ~a~n" allBounds)
          (define instantiatedBounds (instantiate-bounds allBounds))
-         (define query `(and ,permit ,@conditions-fmla))
-         ; Is there at least one request with these conditions that is permitted?
+         (define query `(and ,decision ,@conditions-fmla))
+         ; Is there at least one request with these conditions that yields <decname>?
          ; (unspecified literals -> left free to vary)
          (define fmla (eval `(and ,structural-axioms
                                   ,query) ns))

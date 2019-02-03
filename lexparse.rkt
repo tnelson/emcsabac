@@ -18,7 +18,7 @@
 (define-tokens the-tokens (id))
 (define-empty-tokens the-empty-tokens (comma not EOF pol end po do nop
                                              lparen rparen if is dot semicolon true
-                                             info compare query where s a r))
+                                             info compare query where s a r yields))
 
 (define-lex-abbrevs
   (identifier-characters (re-or (char-range "A" "z")
@@ -41,6 +41,7 @@
    ("." (token-dot))
    ("if:" (token-if))
    ("is" (token-is))
+   ("yields" (token-yields))
    ("true" (token-true))
    ("(" (token-lparen))
    (")" (token-rparen))
@@ -225,10 +226,10 @@
       (begin
         (set! token-history empty)
         (command 'compare (list $2 $3 $5))))
-     ((query id where NONEMPTYCONDITIONLIST)
+     ((query id yields id where NONEMPTYCONDITIONLIST)
       (begin
         (set! token-history empty)
-        (command 'query (cons $2 $4))))
+        (command 'query (cons $2 (cons $4 $6)))))
      ((POL)
       (begin
         (set! token-history empty)
