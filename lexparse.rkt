@@ -18,7 +18,8 @@
 (define-tokens the-tokens (id))
 (define-empty-tokens the-empty-tokens (comma not EOF pol end po do nop
                                              lparen rparen if is dot semicolon true
-                                             info compare query where s a r yields))
+                                             info compare query where s a r yields
+                                             permit deny))
 
 (define-lex-abbrevs
   (identifier-characters (re-or (char-range "A" "z")
@@ -37,6 +38,9 @@
    ("s" (token-s))
    ("a" (token-a))
    ("r" (token-r))
+
+   ("permit" (token-permit))
+   ("deny" (token-deny))
    
    ("." (token-dot))
    ("if:" (token-if))
@@ -190,10 +194,14 @@
               [(started-with '(compare))
                "To compare the behavior of two policies, use 'COMPARE <policy name> <policy name> WHERE <conditions>' (without the quotes or angle-brackets). The 'WHERE' part may be omitted if there are no conditions."]
               [(started-with '(query))
-               "To query the behavior of a policy, use 'QUERY <policy name> WHERE <conditions>' (without the quotes or angle-brackets)."]
-              
-              [(started-with `(pol ,(token-id 'x)))
-               "A policy must be given a name. Please name the policy."]                        
+               "To query the behavior of a policy, use 'QUERY <policy name> YIELDS <permit/deny> WHERE <conditions>' (without the quotes or angle-brackets)."]
+
+              [(or (started-with `(pol ,(token-permit))) (started-with `(pol ,(token-deny))))
+               "A policy must be given a name before starting to define rules. Please name the policy."]
+
+              ; Later rules will trigger the last-resort error, which seems good enough
+              [(started-with `(pol ,(token-id 'x) ,(token-id 'x)))
+               "Each rule must begin with a decision: permit or deny."]                        
                                            
               ; Last resort              
               [else (general-error-message tok-ok? token-name token-value start-pos end-pos)]))
@@ -226,7 +234,7 @@
       (begin
         (set! token-history empty)
         (command 'compare (list $2 $3 $5))))
-     ((query id yields id where NONEMPTYCONDITIONLIST)
+     ((query id yields DEC where NONEMPTYCONDITIONLIST)
       (begin
         (set! token-history empty)
         (command 'query (cons $2 (cons $4 $6)))))
@@ -247,9 +255,9 @@
      
     (NONEMPTYRULELIST ((RULE NONEMPTYRULELIST) (cons $1 $2))
                       ((RULE) (list $1)))
-    (RULE ((id if true dot)
+    (RULE ((DEC if true dot)
            (rule $1 empty))
-          ((id if NONEMPTYCONDITIONLIST dot)
+          ((DEC if NONEMPTYCONDITIONLIST dot)
           (rule $1 $3)))
     (NONEMPTYCONDITIONLIST ((CONDITION comma NONEMPTYCONDITIONLIST) (cons $1 $3))
                            ((CONDITION) (list $1)))
@@ -268,7 +276,11 @@
     ; For now, a variable has to be either s, a, or r. No existentials!
     (VAR ((s) 's)
          ((a) 'a)
-         ((r) 'r) ))))
+         ((r) 'r) )
+    ; Likewise, only 2 decisions
+    (DEC ((permit) 'permit)
+         ((deny) 'deny))
+    )))
   
   ; wrap the parser func. wrapper has same type
   (lambda (gen)             
