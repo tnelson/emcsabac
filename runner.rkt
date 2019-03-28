@@ -208,27 +208,34 @@
 (define ns (namespace-anchor->namespace anchor))
 
 (define (make-universe atoms)
-  (universe (map (lambda (a) (string->symbol (string-append (symbol->string a) "$0"))) atoms)))
+  (define preliminary (map (lambda (a) (string->symbol (string-append (symbol->string a) "$0"))) atoms))
+  ; If policy doesn't use all variables, still need them to exist implicitly.
+  (define extra-s (if (member 's atoms) empty '(s$0)))
+  (define extra-a (if (member 'a atoms) empty '(a$0)))
+  (define extra-r (if (member 'r atoms) empty '(r$0)))
+  (universe (append preliminary extra-s extra-a extra-r)))
+  
 
 (define (run-query env args)
   (define polname (first args))
-  (define conditions (rest args))
+  (define decname (second args))
+  (define conditions (rest (rest args)))
   (define conditions-fmla (map build-condition conditions))
   (define pol (find-pol env polname))
   (cond [(equal? pol #f) ; don't try to use not
-         (raise-user-error (error (format "Unknown policy: ~a" polname)))]
+         (raise-user-error (format "Unknown policy: ~a" polname))]
         [else
          (define varset (remove-duplicates
                          (flatten (map (lambda (a) (atom-args a))
                                        (extract-atoms-policy pol)))))
-         (define permit (build-dec 'permit pol))
+         (define decision (build-dec decname pol))
          (define U (make-universe varset))
          ;(printf "universe: ~a~n" (universe-atoms U))
          (define allBounds (make-bounds U))
          ;(printf "bounds: ~a~n" allBounds)
          (define instantiatedBounds (instantiate-bounds allBounds))
-         (define query `(and ,permit ,@conditions-fmla))
-         ; Is there at least one request with these conditions that is permitted?
+         (define query `(and ,decision ,@conditions-fmla))
+         ; Is there at least one request with these conditions that yields <decname>?
          ; (unspecified literals -> left free to vary)
          (define fmla (eval `(and ,structural-axioms
                                   ,query) ns))
@@ -272,7 +279,7 @@
          (when msg
            (printf "~a~n" msg))
          ]
-        [else (printf "No scenario existed matching those conditions.~n")]))
+        [else (printf "-----------------------------------~nNo scenario existed matching those conditions.~n")]))
 
 (define (pretty-format-condition c)
   (define signis (cond [(condition-sign c) "is"]
@@ -311,7 +318,7 @@
            (define U (make-universe varset))           
            ;(printf "universe: ~a~n" (universe-atoms U))
            (define allBounds (make-bounds U))
-           ;(printf "bounds: ~a~n" allBounds)
+           ;(printf "bounds: ~v~n" allBounds)
            (define instantiatedBounds (instantiate-bounds allBounds))           
            ; (Skolemized) query
            (define queryP1NP2 `(and ,permit1 (! ,permit2))) ; first
@@ -427,10 +434,10 @@
   (define formatted (lambda (x) (format "~a" x)))
   (define binary-ground-str (string-join (map formatted binary-ground) "\n  "))
   
-  (format "-----------------------------------~nFound example request!~n<s>: ~a~n<a>: ~a~n<r>: ~a~n~a"
-          (unaries-in relhash 's$0)
-          (unaries-in relhash 'a$0)
-          (unaries-in relhash 'r$0)
+  (format "-----------------------------------~nFound example request involving...~na subject that is:  ~a~nan action that is:  ~a~na resource that is: ~a~n~a"
+          (remove "Subject" (unaries-in relhash 's$0))
+          (remove "Action" (unaries-in relhash 'a$0))
+          (remove "Resource" (unaries-in relhash 'r$0))
           (if (empty? binary-ground)
               ""
               (if (empty? extras)
