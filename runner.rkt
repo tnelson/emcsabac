@@ -379,7 +379,7 @@
                   [else
                    (raise-user-error (format "Undefined command made it through parser: ~a" cmd))]))))  
   (if (empty? cmdlst)
-      ""
+      empty
       (run-commands-helper cmdlst env)))
 
 (define REQUEST-SKOLEM-RELATIONS '("reqS" "reqA" "reqR"))
